@@ -1,82 +1,151 @@
 #pragma once
 #include <stdio.h>
 #include <string.h>
-#include <malloc.h>
 #include <stdlib.h>
-
-// 用户数据结构
-typedef struct User
-{
-    int id;            // 用户ID
-    char name[50];     // 用户名
-    char password[50]; // 密码
-    int is_admin;      // 是否为管理员
-    int is_VIP;        // 是否为VIP
-};
-User users[50];
-
-// 书籍数据结构
-typedef struct {
-    int id;            // 书籍ID
-    char title[100];   // 书名
-    char author[50];   // 作者
-    float price;       // 价格
-    int stock;         // 库存量
-    // 其他书籍信息，如出版商、出版日期等
-} Book;
+#include "user_Linklist.h"
+#include "book_Linklist.h"
+#include <iostream>
+using namespace std;
 
 // 交易数据结构
 typedef struct {
-    int id;            // 交易ID
     int user_id;       // 用户ID
     int book_id;       // 书籍ID
     int quantity;      // 购买数量
     float total_price; // 总价
-    // 其他交易信息，如交易日期等
 } Transaction;
 
-// 书评数据结构
-typedef struct {
-    int id;            // 书评ID
-    int user_id;       // 用户ID
-    int book_id;       // 书籍ID
-    char content[500]; // 书评内容
-    // 其他书评信息，如评分等
-} Review;
-
-
-//设定管理员
-void set_admin(User* users[])
+// 用户注册函数
+void user_register(User* userList)
 {
-	User *user=(User*)malloc(sizeof(User));
-	user->id=rand();
-	char name[50], password[50];
-	printf("请输入用户名和密码：\n");
-	gets_s(name);
-	gets_s(password);
-	strncpy(user->name,name,50);
-	strncpy(user->password,password,50);
-	user->is_admin = 1;
-	users[0]=user;
+    User newUser;
+    printf("请输入您的ID：");
+    scanf_s("%d", &(newUser.id));
+    printf("请输入您的用户名：");
+    fflush(stdin);
+    cin>>newUser.name;
+    printf("请输入您的密码：");
+    fflush(stdin);
+    cin>>newUser.password;
+    newUser.money = 0.0;
+    newUser.is_admin = 0;
+    newUser.is_VIP = 0;
+    newUser.borrowed_books = nullptr;
+    newUser.next = nullptr;
+
+    // 在链表末尾添加新用户
+    User* p = userList;
+    while (p->next != nullptr) {
+        p = p->next;
+    }
+    p->next = (User*)malloc(sizeof(User));
+    *(p->next) = newUser;
 }
 
-//用户注册函数
-int register_user(User* users[])
-{
-    User *user=(User*)malloc(sizeof(User));
-    user->id=rand();
-    char name[50], password[50];
-    printf("请输入用户名和密码：\n");
-    gets_s(name);
-    gets_s(password);
-    strncpy(user->name,name,50);
-    strncpy(user->password,password,50);
-    user->is_admin = 0;
+// 用户登录函数
+User* user_login(User* userList,int &e) {
+    int id;
+    char password[50];
+    printf("请输入您的ID：");
+    scanf_s("%d", &id);
+    printf("请输入您的密码：");
+    fflush(stdin);
+    cin>>password;
+
+    User* p = userList->next;
+    while (p != nullptr) {
+        if (p->id == id && strcmp(p->password, password) == 0) {
+            e = 1;
+            return p;
+        }
+        p = p->next;
+    }
+
+    printf("登录失败，ID或密码错误。\n");
+    e = 0;
+    return nullptr;
 }
 
-//用户登录函数
-int login_user()
-{
-	
+// 管理员登录函数
+User* admin_login(User* userList,int &e) {
+    int id;
+    char password[50];
+    printf("请输入您的管理员ID：");
+    scanf_s("%d", &id);
+    printf("请输入您的密码：");
+    fflush(stdin);
+    cin>>password;
+    User* p = userList->next;
+    while (p != nullptr) {
+        if (p->id == id && strcmp(p->password, password) == 0 && p->is_admin == 1) {
+            e = 1;
+            return p;
+        }
+        p = p->next;
+    }
+
+    printf("登录失败，ID或密码错误，或者您不是管理员。\n");
+    e = 0;
+    return nullptr;
 }
 
+// 用户充值函数
+void user_recharge(User* user) {
+	float money;
+	printf("请输入您要充值的金额：");
+	scanf_s("%f", &money);
+	user->money += money;
+	printf("充值成功，您的余额为%.2f元。\n", user->money);
+}
+
+//用户注册VIP
+void user_registerVIP(User* user) {
+	if (user->is_VIP == 1) {
+		printf("您已经是VIP用户了。\n");
+		return;
+	}
+	if (user->money < 50) {
+		printf("您的余额不足，无法注册VIP。\n");
+		return;
+	}
+	user->money -= 50;
+	user->is_VIP = 1;
+	printf("注册VIP成功，您的余额为%.2f元。\n", user->money);
+}
+
+// 用户购买书籍函数
+int buy_books(User*user,BookNode *L)
+{
+	int book_id;
+	int quantity;
+	printf("请输入您要购买的书籍ID：");
+	scanf_s("%d", &book_id);
+	printf("请输入您要购买的数量：");
+	scanf_s("%d", &quantity);
+    Book* book = find_book(L, book_id);
+	if (book == nullptr) {
+		printf("购买失败，没有找到该书籍。\n");
+		return 0;
+	}
+	if (book->stock < quantity) {
+		printf("购买失败，库存不足。\n");
+		return 0;
+	}
+	if (user->money < book->price * quantity) {
+		printf("购买失败，您的余额不足。\n");
+		return 0;
+	}
+    if (user->is_VIP == 1)
+    {
+        user->money -= book->price * quantity*0.95;
+        book->stock -= quantity;
+        printf("您是VIP用户，购书享受95折，您的余额为%.2f元。\n", user->money);
+    }
+    else 
+    {
+        user->money -= book->price * quantity;
+        book->stock -= quantity;
+        printf("购买成功，您的余额为%.2f元。\n", user->money);
+    }
+	return 1;
+}
