@@ -1,9 +1,9 @@
 #pragma once
 #include <stdio.h>
 #include <string.h>
-#include <stdlib.h>
 #include "user_Linklist.h"
 #include "book_Linklist.h"
+#include "review_Linklist.h"
 #include <iostream>
 using namespace std;
 
@@ -20,7 +20,7 @@ void user_register(User* userList)
 {
     User newUser;
     printf("请输入您的ID：");
-    scanf_s("%d", &(newUser.id));
+    scanf("%d", &(newUser.id));
     printf("请输入您的用户名：");
     fflush(stdin);
     cin>>newUser.name;
@@ -47,7 +47,7 @@ User* user_login(User* userList,int &e) {
     int id;
     char password[50];
     printf("请输入您的ID：");
-    scanf_s("%d", &id);
+    scanf("%d", &id);
     printf("请输入您的密码：");
     fflush(stdin);
     cin>>password;
@@ -71,7 +71,7 @@ User* admin_login(User* userList,int &e) {
     int id;
     char password[50];
     printf("请输入您的管理员ID：");
-    scanf_s("%d", &id);
+    scanf("%d", &id);
     printf("请输入您的密码：");
     fflush(stdin);
     cin>>password;
@@ -93,7 +93,7 @@ User* admin_login(User* userList,int &e) {
 void user_recharge(User* user) {
 	float money;
 	printf("请输入您要充值的金额：");
-	scanf_s("%f", &money);
+	scanf("%f", &money);
 	user->money += money;
 	printf("充值成功，您的余额为%.2f元。\n", user->money);
 }
@@ -119,9 +119,9 @@ int buy_books(User*user,BookNode *L)
 	int book_id;
 	int quantity;
 	printf("请输入您要购买的书籍ID：");
-	scanf_s("%d", &book_id);
+	scanf("%d", &book_id);
 	printf("请输入您要购买的数量：");
-	scanf_s("%d", &quantity);
+	scanf("%d", &quantity);
     Book* book = find_book(L, book_id);
 	if (book == nullptr) {
 		printf("购买失败，没有找到该书籍。\n");

@@ -1,32 +1,7 @@
 #pragma once
 #include <iostream>
 using namespace std;
-#include "bookstore.h"
-#include "review_Linklist.h"
-
-
-// 书籍数据结构
-typedef struct Book {
-    int id;            // 书籍ID
-    char title[100];   // 书名
-    char author[50];   // 作者
-    float price;       // 价格
-    int stock;         // 库存量
-    mutable ReviewNode* reviews;   // 书评
-};
-
-//用链表存储书籍
-typedef struct BookNode {
-    Book book;
-    struct BookNode* next;
-} BookNode;
-
-
-// 定义借阅书籍的结构
-typedef struct BorrowedBook {
-    int book_id;	   // 书籍ID
-    struct BorrowedBook* next;
-} BorrowedBook;
+#include "datastruct.h"
 
 
 // 创建书籍链表
@@ -120,7 +95,7 @@ int LocBook_position(BookNode* L, char title[])
 		return 0;
 	}
 	else {
-		return i;
+		return i-1;
 	}
 }
 
@@ -137,11 +112,11 @@ int LocateBook(BookNode* L, char title[])
 	}
 	if (p == nullptr)
 	{
-				return 0;
+		return 0;
 	}
 	else
 	{
-				return i;
+		return i-1;
 	}
 }
 
@@ -190,16 +165,18 @@ int DelBook(BookNode* L, int i, Book* e)
 //根据id查找书籍，返回书籍指针
 Book *find_book(BookNode* L, int id)
 {
-	BookNode* p = L->next;
+    BookNode* p = L->next;
 	while (p != nullptr && p->book.id != id)
 	{
 		p = p->next;
 	}
-	if (p == nullptr) {
+	if (p == nullptr) 
+    {
 		return nullptr;
 	}
-	else {
-		return &p->book;
+	else
+    {
+        return &p->book;
 	}
 }
 
@@ -211,11 +188,12 @@ void displayBook(const struct Book* book) {
     printf("价格: %.2f\n", book->price);
     printf("库存: %d\n", book->stock);
     // 如果有书评，显示书评分数
-   /* while(book->reviews->next!= NULL)
+    ReviewNode* temp = book->reviews;
+    while (temp != NULL)
     {
-        printf("书评分数: %.2f\n", book->reviews->review.content);
-        book->reviews = book->reviews->next;
-	}*/
+        printf("书评分数 : %.2f\n", temp->review.content);
+        temp = temp->next;
+    }
 }
 
 //添加图书
@@ -223,7 +201,7 @@ void add_book(BookNode *bookList)
 {
 	Book book;
 	printf("请输入书籍ID:");
-	scanf_s("%d", &book.id);
+	scanf("%d", &book.id);
 	printf("请输入书籍名称:");
     fflush(stdin);
 	cin>>book.title;
@@ -231,9 +209,9 @@ void add_book(BookNode *bookList)
     fflush(stdin);
 	cin>>book.author;
 	printf("请输入书籍价格:");
-	scanf_s("%f", &book.price);
+	scanf("%f", &book.price);
 	printf("请输入书籍库存:");
-	scanf_s("%d", &book.stock);
+	scanf("%d", &book.stock);
     book.reviews = NULL;
 	InsertBook(bookList, BookListLength(bookList) + 1, book);
 	printf("添加成功\n");
@@ -259,12 +237,62 @@ void returnBook(struct Book* book) {
 // 修改图书ID
 void modifyBooksID(struct Book* book, int newID) {
     book->id = newID;
-    printf("书籍ID已修改为: %d\n", book->id);
+    printf("书籍%s的ID已修改为: %d\n", book->title, book->id);
 }
 
 // 修改图书价格
 void modifyBooksPrice(struct Book* book, float newPrice) {
     book->price = newPrice;
-    printf("书籍价格已修改为: %.2f\n", book->price);
+    printf("书籍%s价格已修改为: %.2f\n", book->title, book->price);
 }
 
+//借阅书籍
+void borrow_book(BookNode* bookList,User *user)
+{
+    int id;
+    printf("请输入要借阅的书籍ID:");
+    scanf("%d", &id);
+    Book* book = find_book(bookList, id);
+    if (book == nullptr) {
+        printf("未找到ID为%d的书籍\n", id);
+    }
+    else {
+        borrowBook(book);
+        // 添加借阅记录
+        BorrowedBook* borrowedBook = (BorrowedBook*)malloc(sizeof(BorrowedBook));
+        borrowedBook->book = book;
+        borrowedBook->next = user->borrowed_books;
+        user->borrowed_books = borrowedBook;
+    }
+}
+
+//归还书籍
+void return_book(BookNode* bookList,User *user)
+{
+    int id;
+    printf("请输入要归还的书籍ID:");
+    scanf("%d", &id);
+    Book* book = find_book(bookList, id);
+    if (book == nullptr) {
+        printf("未找到ID为%d的书籍\n", id);
+    }
+    else {
+        returnBook(book);
+        // 删除借阅记录
+        BorrowedBook* p = user->borrowed_books, * q;
+        if (p->book == book) {
+            user->borrowed_books = p->next;
+            free(p);
+        }
+        else {
+            while (p->next != nullptr && p->next->book != book) {
+                p = p->next;
+            }
+            if (p->next != nullptr) {
+                q = p->next;
+                p->next = q->next;
+                free(q);
+            }
+        }
+    }
+}

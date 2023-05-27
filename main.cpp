@@ -45,26 +45,36 @@ void create_initial_book(BookNode *bookList)
 }
 
 //初始化建立书评数据
-void create_initial_review()
+void create_initial_review(BookNode *&bookList)
 {
     //初始化书评数据
     Review reviews[10] =
     {
-         {3, 9, 6, 4},
-         {6, 7, 8, 5},
-         {3, 5, 9, 7},
-         {8, 6, 8, 7},
-         {5, 7, 5, 9},
-         {8, 6, 6, 4},
-         {7, 7, 7, 5},
-         {8, 9, 8, 5},
-         {9, 9, 9, 6},
-         {10, 7, 10, 5}
+        {1, rand()%3, 1, 8.5f},
+        {2, rand()%3, 2, 8.0f},
+        {3, rand()%3, 3, 8.5f},
+        {4, rand()%3, 4, 9.0f},
+        {5, rand()%3, 5, 9.5f},
+        {6, rand()%3, 6, 8.0f},
+        {7, rand()%3, 7, 9.5f},
+        {8, rand()%3, 8, 8.0f},
+        {9, rand()%3, 9, 7.5f},
+        {10, rand()%3, 10, 9.0f}
     };
-
-    // 创建书评列表
-    ReviewNode* reviewList;
-    CreateReviewList(&reviewList, reviews, 10);
+    for(int i = 0; i < 10; i++)
+    {
+        Book *p=find_book(bookList, reviews[i].book_id);
+        if(p!=nullptr)
+        {
+            if (p->reviews == nullptr) {
+                InitReviewList(p->reviews);
+            }
+            ReviewNode *q = new ReviewNode;
+            q->review = reviews[i];
+            q->next = nullptr;
+            InsertReview(p->reviews, q);
+        }
+    }
 }
 
 
@@ -76,6 +86,7 @@ int main() {
     InitBookList(bookList);
     create_initial_data(currentUser);
     create_initial_book(bookList);
+    create_initial_review(bookList);
 
     while (1) {
         printf("请选择操作：\n");
@@ -85,7 +96,7 @@ int main() {
         printf("4. 退出\n");
 
         int choice;
-        scanf_s("%d", &choice);
+        scanf("%d", &choice);
         int e = 0;
 
         switch (choice) {
@@ -150,7 +161,7 @@ void user_operations(User* user,BookNode *bookList) {
         printf("7. 退出\n");
 
         int choice;
-        scanf_s("%d", &choice);
+        scanf("%d", &choice);
 
         switch (choice) {
         case 1:
@@ -160,15 +171,32 @@ void user_operations(User* user,BookNode *bookList) {
         		char title[100];
                 fflush(stdin);
                 cin>>title;
-        		int findbook_id=LocateBook(bookList, title)-1;
+        		int findbook_id=LocateBook(bookList, title);
         		Book* findbook = find_book(bookList, findbook_id);
                 displayBook(findbook);
         		break;
 	        }
         case 2:
 	        {
-		        // 借阅书籍
-            
+                int borrow_or_return;
+                printf("请选择操作：\n");
+                printf("1. 借阅书籍\n");
+                printf("2. 归还书籍\n");
+                scanf("%d", &borrow_or_return);
+                if(borrow_or_return==1)
+                {
+                    // 借阅书籍
+                    borrow_book(bookList, user);
+                }
+                else if(borrow_or_return==2)
+                {
+                    // 归还书籍
+                    return_book(bookList, user);
+                }
+                else
+                {
+                    printf("无效的选项，请重新选择。\n");
+                }
         		break;
 	        }
         case 3:
@@ -180,7 +208,16 @@ void user_operations(User* user,BookNode *bookList) {
         case 4:
 	        {
 		        // 写书评
-            
+                int id;
+                printf("请输你的id");
+                scanf("%d", &id);
+                printf("请输入要写书评的书籍id");
+                int book_id;
+                scanf("%d", &book_id);
+                float content;
+                printf("请输入书评分数");
+                scanf("%f", &content);
+                WriteReview(user, bookList,id,book_id,content);
         		break;
 	        }
         case 5:
@@ -210,7 +247,7 @@ void user_operations(User* user,BookNode *bookList) {
 }
 
 // 管理员操作
-void admin_operations(User* admin,BookNode *BookList) {
+void admin_operations(User* userlist,BookNode *BookList) {
     while (1) {
         printf("请选择操作：\n");
         printf("1. 增加书籍\n");
@@ -222,7 +259,7 @@ void admin_operations(User* admin,BookNode *BookList) {
         printf("7. 退出\n");
 
         int choice;
-        scanf_s("%d", &choice);
+        scanf("%d", &choice);
 
         switch (choice) {
         case 1:
@@ -240,21 +277,22 @@ void admin_operations(User* admin,BookNode *BookList) {
                 cin>>book_title;
         		int p=LocateBook(BookList, book_title);
         		Book *book=find_book(BookList,p);
+                displayBook(book);
         		int changebook_choice=1;
         		while (changebook_choice)
         		{
         			printf("请输入要修改的书籍信息\n0修改书籍ID，1修改书籍价格，2删除图书，3退出修改\n");
-                    scanf_s("%d",&changebook_choice);
+                    scanf("%d",&changebook_choice);
         			if(changebook_choice==0)
         			{
         				printf("请输入修改后的书籍ID\n");
-        				scanf_s("%d",&book->id);
+        				scanf("%d",&book->id);
         				modifyBooksID(book, book->id);
         			}
         			else if(changebook_choice==1)
         			{
         				printf("请输入修改后的书籍价格\n");
-        				scanf_s("%f",&book->price);
+        				scanf("%f",&book->price);
         				modifyBooksPrice(book, book->price);
         			}
         			else if(changebook_choice==2)
@@ -274,17 +312,61 @@ void admin_operations(User* admin,BookNode *BookList) {
         		break;
 	        }
         case 3:
-            {break;}
+	        {
+                printf("请输入要修改的用户ID\n");
+                int user_id;
+                scanf("%d", &user_id);
+                display_user(userlist, user_id);
+                int user_choice = 1;
+                while(user_choice!=0)
+                {
+                    printf("请输入要修改的用户信息\n");
+                    printf("1. 修改用户ID\n");
+                    printf("2. 修改用户密码\n");
+                    printf("3. 修改用户的用户名\n");
+                    printf("4. 修改用户的会员状态\n");
+                    printf("5. 修改用户的余额\n");
+                    printf("6.退出修改");
+                    scanf("%d", &user_choice);
+                    if(user_choice==1)
+                    {
+                        printf("请输入修改后的用户ID\n");
+	                    int new_id=scanf("%d", &new_id);
+                        change_user_id(userlist, new_id, user_id);
+                    }
+                    if(user_choice==2)
+                    {
+                        change_user_password(userlist, user_id);
+                    }
+                    if(user_choice==3)
+                    {
+                    	change_user_name(userlist, user_id);
+					}
+                    if (user_choice==4)
+                    {
+                        change_user_VIP(userlist, user_id);
+                    }
+                    if(user_choice==5)
+                    {
+                        change_user_money(userlist, user_id);
+                    }
+                    if (user_choice==6)
+                    {
+                        break;
+                    }
+                }
+        		break;
+	        }
         case 4:
 	        {
 		        // 查找书籍
         		printf("请选择查找方式\n1.通过ID查找\n2.通过书名查找\n");
         		int search_choice;
-        		scanf_s("%d", &search_choice);
+        		scanf("%d", &search_choice);
         		if (search_choice == 1)
         		{
         			printf("请输入要查找的图书ID\n");
-        			int search_id = scanf_s("%d", &search_id);
+        			int search_id = scanf("%d", &search_id);
         			Book* search_book = find_book(BookList, search_id);
         			displayBook(search_book);
         		}
@@ -306,13 +388,29 @@ void admin_operations(User* admin,BookNode *BookList) {
         case 5:
 	        {
 		        // 删除书评
-        		//delete_review();
+        		printf("请输入要删除的书的ID\n");
+                int book_id;
+                scanf("%d", &book_id);
+                printf("请输入该书评的用户id\n");
+                int user_id;
+                scanf("%d", &user_id);
+                Book* book = find_book(BookList, book_id);
+                ReviewNode* review = FindReview(BookList, user_id, book_id);
+                DeleteReview(book->reviews, review);
         		break;
 	        }
         case 6:
 	        {
 		        // 修改书评
-        		//modify_review(admin);
+        		printf("请输入要修改的书的ID\n");
+                int book_id;
+                scanf("%d", &book_id);
+                printf("请输入该书评的用户id\n");
+                int user_id;
+                scanf("%d", &user_id);
+                Book* book = find_book(BookList, book_id);
+                ReviewNode* review = FindReview(BookList, user_id, book_id);
+                ModifyReview(review);
         		break;
 	        }
         case 7:

@@ -1,19 +1,11 @@
 #pragma once
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
-#include "bookstore.h"
+#include <iostream>
+using namespace std;
+#include "datastruct.h"
 
-typedef struct User {
-    int id;
-    char name[50];
-    char password[50];
-    float money;
-    int is_admin;
-    int is_VIP;
-    struct BorrowedBook* borrowed_books; // 指向借阅书籍的链表
-    struct User* next;
-} User;
+
 
 
 // 创建用户链表
@@ -175,7 +167,7 @@ void change_user_VIP(User* userList, int id)
     User* p = find_user(userList, id);
     printf("请选择要修改的VIP状态\n0为非VIP\n1为VIP\n");
     int vip;
-    scanf_s("%d", &vip);
+    scanf("%d", &vip);
     p->is_VIP = vip;
 }
 
@@ -184,6 +176,42 @@ void change_user_money(User* userList, int id)
 {
     User* p = find_user(userList, id);
     printf("请输入修改后的余额\n");
-    int money = scanf_s("%d", &money);
+    int money = scanf("%d", &money);
     p->money = money;
+}
+
+//修改用户的用户名
+void change_user_name(User* userList, int id)
+{
+	User* p = find_user(userList, id);
+	printf("请输入修改后的用户名\n");
+	char name[50];
+	cin >> name;
+	strcpy(p->name, name);
+}
+
+//修改用户的密码
+void change_user_password(User* userList, int id)
+{
+	User* p = find_user(userList, id);
+	printf("请输入修改后的密码\n");
+	char password[50];
+	cin >> password;
+	strcpy(p->password, password);
+}
+
+//展示用户信息
+void display_user(User* userList, int id)
+{
+    User* p = find_user(userList, id);
+    printf("用户ID: %d, 用户名: %s, 余额: %.2f,是否为VIP: %d\n",
+        p->id, p->name, p->money, p->is_VIP);
+    //显示借阅的书籍
+    printf("借阅的书籍：\n");
+    BorrowedBook* q = p->borrowed_books->next;
+    while (q != nullptr)
+    {
+        printf("书籍ID：%d,书籍名称：%s\n", q->book->id, q->book->title);
+        q = q->next;
+    }
 }
